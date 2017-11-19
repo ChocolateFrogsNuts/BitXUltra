@@ -1,0 +1,25 @@
+
+BitXUltra firmware for the BITX40 by VK6MN
+
+This document covers the firmware written for the BITX Raduino board 
+with the BITX40 transceiver as supplied by www.hfsigs.com. 
+
+The firmware started out as the original Bitx firmware by Ashhar Farhan, 
+VU2ESE (although not much of that is left here) and has grown to incorporate 
+ideas from the uBitx and other Bitx related material on the internet, 
+including several blog posts by Don Cantrell, ND6T.  
+
+All the code in version 1.0 that was not part of Ashhar's original firmware 
+is written from scratch by Mike, VK6MN.
+
+This firmware uses an 'everything in' approach, with #defines used to enable 
+the various options. As a result it can be built to make your radio as 
+advanced or as streamlined (simple) as you like without having to maintain 
+more than one version. 
+The simplest version is the same as the original BITX40 firmware and only 
+provides control of the DDS frequency, with a calibration button.
+The most complete version provides shuttle tuning, PTT control, a menu, RIT, 
+USB/LSB, CW with Straight Key, Paddle or Bug, setting the sidetone frequency, 
+saving the current state as default, a channel mode with up to 40 channels, 
+up to 6 VFOs, an SWR/S-Meter, CW Beacon, Antenna Analyser and more! 
+(and it's possible to make it all fit at the same time!)
