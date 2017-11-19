@@ -57,6 +57,7 @@ struct state {
            bool cw_swap_paddles:1;
            bool cw_ultimatic:1;
   unsigned int  cw_beacon_interval;
+  unsigned int  fsq_beacon_interval;
 };
 
 
@@ -83,8 +84,11 @@ struct vfo {
 #if CWBEACON_EEPROM_START + CWBEACON_MAXLEN > STATE_EEPROM_START
 #error CW Beacon string length is too long.
 #endif
-#if STATE_EEPROM_START + STATE_EEPROM_SIZE > VFO_EEPROM_START
-#error State will overwrite VFO storage
+#if STATE_EEPROM_START + STATE_EEPROM_SIZE > FSQ_EEPROM_START
+#error State will overwrite FSQ data storage
+#endif
+#if FSQ_EEPROM_START + FSQ_EEPROM_SIZE > VFO_EEPROM_START
+#error FSQ Data will overwrite VFO storage
 #endif
 #if (VFO_EEPROM_START + (VFO_COUNT * VFO_EEPROM_SIZE)) > CHANNEL_EEPROM_START
 #error VFOs will overwrite Channel storage
@@ -106,7 +110,7 @@ struct vfo {
  * MODE_RUNBEACON : CW Beacon Mode
  * MODE_ANALYSER : Antenna Analyser
  */
-enum modes { MODE_NORMAL, MODE_MENU, MODE_ADJUSTMENT, MODE_RUNBEACON, MODE_ANALYSER,
+enum modes { MODE_NORMAL, MODE_MENU, MODE_ADJUSTMENT, MODE_CWBEACON, MODE_FSQBEACON, MODE_ANALYSER,
              #if !NEW_CAL
              MODE_CALIBRATE
              #endif
@@ -118,7 +122,7 @@ enum modes { MODE_NORMAL, MODE_MENU, MODE_ADJUSTMENT, MODE_RUNBEACON, MODE_ANALY
 // DIS - not actually TXing because TX disabled on this freq.
 // CAT - Serial port request.
 // ANA - analyser
-enum txcause { INTX_NONE, INTX_PTT, INTX_CW, INTX_DIS, INTX_CAT, INTX_ANA };
+enum txcause { INTX_NONE, INTX_PTT, INTX_CW, INTX_DIS, INTX_CAT, INTX_ANA, INTX_FSQ };
 
 // RIT states for setFrequency()
 // _OFF - rit is ignored. Tune the VFO to the dial freq. (ie TX mode)
@@ -196,6 +200,19 @@ extern Frequency findNextBandFreq(Frequency f);
 extern void setFilters(const struct band *band);
 #endif
 
+// fsq.cpp
+struct fsq_data { // must not exceed 50 bytes
+  char call[10];
+  char loc[10];
+  byte magic;
+  byte dbm;
+  char message[14];
+};
+extern void set_fsq_data(struct fsq_data *data);
+extern void get_fsq_data(struct fsq_data *data);
+extern void start_fsq_tx();
+extern void do_fsq_tx();
+
 extern Si5351 si5351;
 
 // BitXUltra.ino
@@ -209,8 +226,10 @@ extern Frequency bfo_freq;
 extern byte pulseState;
 #endif
 
+extern void _setFrequency(Frequency f, long fine);
 extern void setFrequency(enum ritstate);
 #if HAVE_BFO
+extern void setBFO(Frequency f, long fine);
 extern void setBFO(Frequency f);
 #endif
 extern bool TXon(enum txcause cause);
@@ -226,6 +245,7 @@ extern const PROGMEM char S_OFF[];
 extern const PROGMEM char S_COMMA[];
 extern const PROGMEM char S_COLON[];
 extern const PROGMEM char S_CWBEACON[];
+extern const PROGMEM char S_FSQBEACON[];
 extern const PROGMEM char BLANKLINE[];
 
 extern PGM_P mod_name(enum modulation);

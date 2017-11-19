@@ -16,15 +16,18 @@ static unsigned long last_update=0;
 static unsigned long last_recalc=0;
 
 #define HIST_COUNT 50
+static unsigned char hist_pos=0;
+#if HAVE_SWR
 static unsigned int  rp_hist[HIST_COUNT];
 static unsigned int  fp_hist[HIST_COUNT];
-static unsigned int   s_hist[HIST_COUNT];
-static unsigned char hist_pos=0;
+#endif
 #if HAVE_SMETER
+static unsigned int  s_hist[HIST_COUNT];
 static unsigned int  s_hist_avg=0, s_hist_peak=0;
 #endif
 
 
+#if HAVE_SMETER
 inline void _to_slevel_up(int &s, unsigned long &p, unsigned int m, unsigned int d, byte stp) {
      while ((p<=S9_LEVEL) && (s>0)) {
         p  = (p*m)/d;
@@ -68,6 +71,7 @@ int to_slevel(int v) {
 
   return s;
 }
+#endif // HAVE_SMETER
 
 #if 0
 int to_slevel_log(int v) {
@@ -102,44 +106,71 @@ void s_level_test() {
 struct power_stats {
   unsigned int avg_fp, peak_fp;
   unsigned int avg_rp, peak_rp;
+};
+
+struct slevel_stats {
   unsigned int avg_s,  peak_s;
 };
 
 static void read_meters() {
-      s_hist[hist_pos] = analogRead(S_POWER) * S_POWER_CAL / 100;
+#if HAVE_SMETER
+     s_hist[hist_pos] = analogRead(S_POWER) * S_POWER_CAL / 100;
+#endif
+#if HAVE_SWR
      rp_hist[hist_pos] = analogRead(R_POWER) * R_POWER_CAL / 100;
      fp_hist[hist_pos] = analogRead(F_POWER) * F_POWER_CAL / 100;
+#endif
      if (++hist_pos>=HIST_COUNT) hist_pos=0;
 }
 
+
+#if HAVE_SMETER
+static void calc_slevel_stats(struct slevel_stats &p) {
+  byte i;
+#if HIST_COUNT>64
+  // more than 64 samples means total may not fit in an unsigned int (64*1024), so use unsigned long.
+  unsigned long int tot_s;
+#else
+  unsigned int tot_s;
+#endif
+
+  p.peak_s = s_hist[0];
+  tot_s  = s_hist[0];
+
+  for (i=1; i<HIST_COUNT; i++) {
+      if (s_hist[i]>p.peak_s) p.peak_s=s_hist[i];
+      tot_s += s_hist[i];
+  }
+
+  p.avg_s  = tot_s  / HIST_COUNT;
+}
+#endif // HAVE_SMETER
+
+#if HAVE_SWR
 static void calc_power_stats(struct power_stats &p) {
   byte i;
 #if HIST_COUNT>64
   // more than 64 samples means total may not fit in an unsigned int (64*1024), so use unsigned long.
-  unsigned long int tot_fp, tot_rp, tot_s;
+  unsigned long int tot_fp, tot_rp;
 #else
-  unsigned int tot_fp, tot_rp, tot_s;
+  unsigned int tot_fp, tot_rp;
 #endif
 
   p.peak_rp=rp_hist[0];
   p.peak_fp=fp_hist[0];
-  p.peak_s = s_hist[0];
   tot_rp =rp_hist[0];
   tot_fp =fp_hist[0];
-  tot_s  = s_hist[0];
 
   for (i=1; i<HIST_COUNT; i++) {
       if (rp_hist[i]>p.peak_rp) p.peak_rp=rp_hist[i];
       tot_rp += rp_hist[i];
       if (fp_hist[i]>p.peak_fp) p.peak_fp=fp_hist[i];
       tot_fp += fp_hist[i];
-      if (s_hist[i]>p.peak_s) p.peak_s=s_hist[i];
-      tot_s += s_hist[i];
   }
   p.avg_rp = tot_rp / HIST_COUNT;
   p.avg_fp = tot_fp / HIST_COUNT;
-  p.avg_s  = tot_s  / HIST_COUNT;
 }
+
 
 static unsigned int calc_swr(unsigned int fp, unsigned int rp) {
      if (fp==rp) return 999;
@@ -155,7 +186,7 @@ static unsigned int calc_swr(unsigned int fp, unsigned int rp) {
      //swr = 100 * (log10(fp/100) + log10(rp/100)) / (log10(fp/100) - log10(rp/100));
      return abs(swr);     
 }
-
+#endif // HAVE_SWR
 
 /*
  * Display either an S-Meter (RX) or SWR meter (TX) in line2.
@@ -164,15 +195,22 @@ void doMeters() {
   read_meters();
   
   if (!interval(&last_recalc,50)) return;
-
-  struct power_stats pwr;
-  calc_power_stats(pwr);
   
 #if !HAVE_PTT
   // If we don't have a PTT connection we can guess based on forward power :)
-  if (p.avg_fp > 1 && p.avg_fp>p.avg_rp) {
+  #if HAVE_SWR
+  struct power_stats pwr;
+  calc_power_stats(pwr);
+  if (pwr.avg_fp > 1 && pwr.avg_fp>pwr.avg_rp) {
+  #else
+  if (0) {         // if we don't have PTT or SWR, assume always RX
+  #endif
 #else
   if (inTx!=INTX_NONE) {
+     #if HAVE_SWR
+     struct power_stats pwr;
+     calc_power_stats(pwr);
+     #endif
 #endif
      #if HAVE_SMETER
         s_hist_avg=9999; // force first update returning to RX
@@ -196,8 +234,10 @@ void doMeters() {
      #endif
   } else {        // S-METER
      last_swr=9999;
-
+     
 #if HAVE_SMETER
+     struct slevel_stats pwr;
+     calc_slevel_stats(pwr);
      unsigned char s_level = to_slevel(pwr.avg_s);
      unsigned char s_peak  = to_slevel(pwr.peak_s);
 

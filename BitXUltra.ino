@@ -144,23 +144,30 @@ void calibrate(){
  */
 
 // without regard for filters and RIT.
-void _setFrequency(Frequency f) {
+void _setFrequency(Frequency f, long fine) {
+  Frequency bfo=bfo_freq+state.bfo_trim;
   switch (vfos[state.vfoActive].mod) {
-    case MOD_LSB:  f = bfo_freq + state.bfo_trim - f; break;
-    case MOD_USB:  f = bfo_freq + state.bfo_trim + f; break;
-    case MOD_AUTO: f = (f<10000000UL) ? bfo_freq + state.bfo_trim - f : bfo_freq + state.bfo_trim + f; break;
+    case MOD_LSB:  f = bfo - f; break;
+    case MOD_USB:  f = bfo + f; break;
+    case MOD_AUTO: f = (f<10000000UL) ? bfo - f : bfo + f; break;
   }
   //Serial.print("LO:");
   //Serial.println(f);
-  si5351.set_freq(f * SI5351_FREQ_MULT, SI5351_CLK2);  
+  si5351.set_freq((f * SI5351_FREQ_MULT) + fine, SI5351_CLK2);
+}
+void _setFrequency(Frequency f) {
+  _setFrequency(f,0);
 }
 
 #if HAVE_BFO
-void setBFO(Frequency f) {
+void setBFO(Frequency f, long fine) {
   f+=state.bfo_trim;
   //Serial.print("BFO:");
   //Serial.println(f);
-  si5351.set_freq(f * SI5351_FREQ_MULT, BFO_OUTPUT);
+  si5351.set_freq((f * SI5351_FREQ_MULT) + fine, BFO_OUTPUT);
+}
+void setBFO(Frequency f) {
+  setBFO(f, 0);
 }
 #endif
 
@@ -577,7 +584,7 @@ void setup()
 }
 
 
-#if HAVE_CW_BEACON
+#if HAVE_CW_BEACON || HAVE_FSQ_BEACON
 unsigned long last_beacon_start=0;
 #endif
 
@@ -664,7 +671,7 @@ void loop(){
          break;
 
 #if HAVE_CW_BEACON
-    case MODE_RUNBEACON:
+    case MODE_CWBEACON:
          if (btnDown()) {
             mode=MODE_NORMAL;
             last_beacon_start=0;
@@ -680,6 +687,22 @@ void loop(){
          break;
 #endif // HAVE_CW_BEACON
 
+#if HAVE_FSQ_BEACON
+    case MODE_FSQBEACON:
+         if (btnDown()) {
+            mode=MODE_NORMAL;
+            last_beacon_start=0;
+            printLine2(F("  Beacon Off    "));
+            holdLine2(500);
+            waitBtnUp();
+         } else if (interval(&last_beacon_start, (unsigned long)state.cw_beacon_interval * 1000UL)) {
+            printLine2(S_FSQBEACON);
+            start_fsq_tx();
+         } else {
+            do_fsq_tx();
+         }
+         break;
+#endif // HAVE_CW_BEACON
 
 #if HAVE_ANALYSER
     case MODE_ANALYSER:

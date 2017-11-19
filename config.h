@@ -51,14 +51,20 @@
 // set to 2 for paddle/bug and straight key compatible (connect straight key direct, paddle via resistors) +600 bytes
 #define HAVE_CW           2
 
-// a work in progress... automated CW sender requires approx 840 bytes with prosign handlers
-// maybe use CAT to set the string in EEPROM, then menu to set timing/activate.
+// Automated CW sender requires approx 840 bytes with prosign handlers
+// use CAT to set the string in EEPROM, then menu to set timing/activate.
+// Requires HAVE_CW==2
 #define HAVE_CW_SENDER    1
 
 // Ability and menu settings to be a CW beacon. Use CAT command cwb to set the text in EEPROM.
 // (once it's set you can turn off CAT to make room for some other feature - beacon will still work)
 // Menu option "CW Beacon" to set the interval and activate the beacon mode.  +500 bytes.
+// requires HAVE_CW==2
 #define HAVE_CW_BEACON    1
+
+// Experimantal: JT* and WSPR beacon.   This adds about 18% and will NOT fit with everything else! 
+// Turn off stuff like Analyser, SMeter, SWR and set CW==1 to get it in.
+//#define HAVE_FSQ_BEACON   1
 
 /* 
  * Define HAVE_SMETER if you have wired up to monitor the audio levels ust before the volume knob. 
@@ -79,7 +85,7 @@
 // They won't fit unles you only have one or two bands, or use the cut-down CAT_MINIMAL version.
 // I _have_ managed to optimize the si5351 library to gain about 1600 bytes and make everything fit!
 // I also made it possible to gain another 2200 bytes by disabling support for clocks 6 and 7 that 
-// are not in the variant on the Raduino, but we don't need that space yet.
+// are not in the variant on the Raduino.
 
 // Rig control (CAT). Adds about 10% to program and 3% to dynamic memory for full version
 #define HAVE_CAT 1
@@ -210,21 +216,29 @@
 #define CWBEACON_INTERVAL_MAX (300)
 #define CWBEACON_INTERVAL_STEP (10)
 
+#define FSQBEACON_INTERVAL_MIN (120)
+#define FSQBEACON_INTERVAL_MAX (360)
+#define FSQBEACON_INTERVAL_STEP (60)
+
 #define STATE_EEPROM_START 50
 #define STATE_EEPROM_SIZE  50
 #define STATE_MAGIC 0x5A
 #define VFO_MAGIC   0xA5
+#define FSQ_MAGIC   0x55
+
+#define FSQ_EEPROM_START  100
+#define FSQ_EEPROM_SIZE    50
 
 // Room for up to 6 VFOs. If you want more, change CHANNEL_EEPROM_START but that reduces the 
 // maximum number of channels that can be used.
 #define VFO_COUNT          3
-#define VFO_EEPROM_START 100
+#define VFO_EEPROM_START 150
 #define VFO_EEPROM_SIZE   20
 
-// Room for up to 40 channels in the EEPROM, If you want a few more reduce the START address 
+// Room for up to 37 channels in the EEPROM, If you want a few more reduce the START address 
 // (which also reduces the maximum number of VFOs that can be used).
 #define CHANNEL_COUNT         10
-#define CHANNEL_EEPROM_START 220
+#define CHANNEL_EEPROM_START 270
 #define CHANNEL_EEPROM_SIZE   20
 
 #define LOWEST_FREQ  (3500000l)

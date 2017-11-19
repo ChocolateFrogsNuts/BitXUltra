@@ -24,7 +24,8 @@ static const char M_SCHAN[] PROGMEM = "Store Channel";
 static const char M_STONE[] PROGMEM = "S-Tone";
 static const char M_WPM  [] PROGMEM = "WPM";
 static const char M_KEYER[] PROGMEM = "Keyer Mode";
-#define M_BEAC S_CWBEACON
+#define M_CWBEAC  S_CWBEACON
+#define M_FSQBEAC S_FSQBEACON
 static const char M_SYNC [] PROGMEM = "Sync VFOs";
 static const char M_CAL  [] PROGMEM = "CALIBRATE";
 static const char M_BFO  [] PROGMEM = "BFO-Trim";
@@ -236,16 +237,29 @@ static void h_keyermode() {
 static void s_cwbeacon() {
              state.cw_beacon_interval = adjustment_data.value;
              printLine2(FH(S_CWBEACON));
-             mode=MODE_RUNBEACON;
+             mode=MODE_CWBEACON;
 }
 static void h_cwbeacon() {
-             defineAdjustment(A_BEAC, M_BEAC, CWBEACON_INTERVAL_MIN, CWBEACON_INTERVAL_MAX, CWBEACON_INTERVAL_STEP, 
+             defineAdjustment(A_CWBEAC, M_CWBEAC, CWBEACON_INTERVAL_MIN, CWBEACON_INTERVAL_MAX, CWBEACON_INTERVAL_STEP, 
                           NULL, NULL, &s_cwbeacon);
-             startAdjustment(A_BEAC, state.cw_beacon_interval);
+             startAdjustment(A_CWBEAC, state.cw_beacon_interval);
              mode=MODE_ADJUSTMENT;
 }
-#endif
+#endif // HAVE_CW_BEACON
 #endif // HAVE_CW==2
+#if HAVE_FSQ_BEACON
+static void s_fsqbeacon() {
+             state.fsq_beacon_interval = adjustment_data.value;
+             printLine2(FH(S_FSQBEACON));
+             mode=MODE_FSQBEACON;
+}
+static void h_fsqbeacon() {
+             defineAdjustment(A_FSQBEAC, M_FSQBEAC, FSQBEACON_INTERVAL_MIN, FSQBEACON_INTERVAL_MAX, FSQBEACON_INTERVAL_STEP, 
+                          NULL, NULL, &s_fsqbeacon);
+             startAdjustment(A_FSQBEAC, state.fsq_beacon_interval);
+             mode=MODE_ADJUSTMENT;
+}
+#endif // HAVE_FSQ_BEACON
 #endif // HAVE_CW
 
 static void h_sync() {
@@ -331,8 +345,11 @@ static const struct menuItem menuItems[] PROGMEM = {
   { M_WPM,   &h_wpm },
   { M_KEYER, &h_keyermode },
   #if HAVE_CW_BEACON
-  { M_BEAC,  &h_cwbeacon },
+  { M_CWBEAC,  &h_cwbeacon },
   #endif
+  #endif
+  #if HAVE_FSQ_BEACON
+  { M_FSQBEAC, &h_fsqbeacon },
   #endif
 #endif
   { M_SYNC,  &h_sync },

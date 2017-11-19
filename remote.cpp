@@ -34,6 +34,8 @@ static const char CMD_METER   [] PROGMEM = "meter";
 static const char CMD_ANN     [] PROGMEM = "ann";
 static const char CMD_CW      [] PROGMEM = "cw";
 static const char CMD_CWB     [] PROGMEM = "cwb";
+static const char CMD_FSQ     [] PROGMEM = "fsq";
+static const char CMD_FSQB    [] PROGMEM = "fsqb";
 static const char CMD_HELP    [] PROGMEM = "help";
 
 typedef PGM_P (*remoteHandler)(char *p);
@@ -270,6 +272,22 @@ static PGM_P h_cwbeacon(char *p) {
 }
 #endif
 #endif
+
+#if HAVE_FSQ_BEACON
+static PGM_P h_fsqsender(char *p) {
+  // TODO: encode p into the FSQ buffer and send it
+  UNUSED(p);
+  return NULL;
+}
+
+static PGM_P h_fsqbeacon(char *p) {
+  // TODO: store p as the FSQ parameters.
+  UNUSED(p);
+  struct fsq_data data;
+  set_fsq_data(&data);
+  return NULL;
+}
+#endif
 #endif // HAVE_CW
 
 static PGM_P h_cal(char *p) {
@@ -374,6 +392,10 @@ static const struct cmd commandlist[] PROGMEM = {
 #endif
 #if HAVE_CW_BEACON
   { CMD_CWB,      &h_cwbeacon },
+#endif
+#if HAVE_FSQ_BEACON
+  { CMD_FSQ,      &h_fsqsender },
+  { CMD_FSQB,     &h_fsqbeacon },
 #endif
 #endif // HAVE_CW
   { CMD_CAL,      &h_cal },

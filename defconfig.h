@@ -18,11 +18,15 @@
 #endif
 
 #ifndef HAVE_CW_SENDER
-#define HAVE_CW_SENDER 0
+#define HAVE_CW_SENDER    0
 #endif
 
 #ifndef HAVE_CW_BEACON
-#define HAVE_CW_BEACON 0
+#define HAVE_CW_BEACON    0
+#endif
+
+#ifndef HAVE_FSQ_BEACON
+#define HAVE_FSQ_BEACON   0
 #endif
 
 #ifndef HAVE_BFO
@@ -93,6 +97,11 @@
 #if !HAVE_CW_SENDER
 #undef HAVE_CW_BEACON
 #define HAVE_CW_BEACON 0
+#endif
+
+#if !HAVE_CW
+#undef HAVE_FSQ_BEACON
+#define HAVE_FSQ_BEACON 0
 #endif
 
 #if !HAVE_SWR

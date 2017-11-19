@@ -20,6 +20,7 @@ const PROGMEM char S_OFF[]="OFF";
 const char S_COMMA   [] PROGMEM = ",";
 const char S_COLON   [] PROGMEM = ":";
 const char S_CWBEACON[] PROGMEM = "CW Beacon";
+const char S_FSQBEACON[]PROGMEM = "FSQ Beacon";
 const char S_        [] PROGMEM = "";
 const char BLANKLINE [] PROGMEM = "                ";
 
@@ -74,6 +75,7 @@ void init_state() {
   state.cw_swap_paddles=false;
   state.cw_ultimatic   =false;
   state.cw_beacon_interval=CWBEACON_INTERVAL_MIN;
+  state.fsq_beacon_interval=FSQBEACON_INTERVAL_MIN;
   for (i=0; i<state.vfoCount; i++) {
       init_vfo(i);
   }
@@ -188,6 +190,18 @@ void print_beacon_text() {
 // helper func to save including EEPROM.h in cw.cpp
 byte getEEPROMByte(unsigned int addr) {
   return EEPROM.read(addr);
+}
+#endif
+
+#if HAVE_FSQ_BEACON
+void set_fsq_data(struct fsq_data *data) {
+  EEPROM.put(FSQ_EEPROM_START, *data);
+}
+void get_fsq_data(struct fsq_data *data) {
+  EEPROM.get(FSQ_EEPROM_START, *data);
+  if (data->magic!=FSQ_MAGIC) {
+     memset(data,0,sizeof(*data));
+  }
 }
 #endif
 
