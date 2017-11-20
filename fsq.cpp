@@ -25,14 +25,14 @@ struct fsq_params {
    PGM_P name;
    int tone_spacing;
    int tone_delay;
-   Frequency freq_ofs;   
+   int freq_ofs;
    byte symbol_count;
 };
 
-// Order is important - indexed by FSQ_* constants
+// Order is important - indexed by WITH_FSQ_* constants
 const struct fsq_params fsq_params[] PROGMEM = {
    // Name,  tone spacing, delay, frequency, symbol count
-   {S_JT9,   174, 576,  +3050,  JT9_SYMBOL_COUNT},
+   {S_JT9,   174, 576,  +2050,  JT9_SYMBOL_COUNT},
    {S_JT65,  269, 371,  +1350, JT65_SYMBOL_COUNT},
    {S_JT4,   437, 229,  +1350,  JT4_SYMBOL_COUNT},
    {S_WSPR,  146, 683,  +1350, WSPR_SYMBOL_COUNT},
@@ -43,7 +43,7 @@ const struct fsq_params fsq_params[] PROGMEM = {
 };
 
 
-struct fsq_params fsq_mode_params={S_JT4,   437, 229, 14078500UL,  JT4_SYMBOL_COUNT};
+struct fsq_params fsq_mode_params;
 byte fsq_buffer_pos=0; // current pos in buffer
 byte fsq_buffer_len=0; // total symbols in the buffer
 byte fsq_buffer[255];  // the buffer of symbols to TX.
@@ -147,13 +147,13 @@ void do_fsq_tx() {
   
   if (fsq_buffer_pos<fsq_buffer_len) {
      if (!interval(&fsq_last_change, fsq_mode_params.tone_delay)) return;
+     long delta=(fsq_mode_params.freq_ofs * SI5351_FREQ_MULT) + (fsq_buffer[fsq_buffer_pos] * fsq_mode_params.tone_spacing);
      
      #if HAVE_BFO
-        //si5351.set_freq(((bfo_freq + state.bfo_trim) * SI5351_FREQ_MULT) - (fsq_buffer[fsq_buffer_pos] * fsq_mode_params.tone_spacing), BFO_OUTPUT);
-        setBFO(bfo_freq, -(fsq_buffer[fsq_buffer_pos] * fsq_mode_params.tone_spacing));
+        //si5351.set_freq(((bfo_freq + state.bfo_trim) * SI5351_FREQ_MULT) - delta, BFO_OUTPUT);
+        setBFO(bfo_freq, -delta);
      #else
         Frequency f = vfos[sttate.vfoActive].frequency;
-        Frequency delta = (fsq_mode_params.freq * SI5351_FREQ_MULT) + (fsq_buffer[fsq_buffer_pos] * fsq_mode_params.tone_spacing);
         case (vfos[state.vfoActive].mod) {
            MOD_AUTO: if (f>=10000000) break;
            MOD_LSB: delta = -delta; break;
