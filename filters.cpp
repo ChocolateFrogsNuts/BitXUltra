@@ -133,12 +133,15 @@ bool      txFilterInit=false;
  * to set the filter outputs appropriately to enable any number of relays required.
  */
 #if FILTER_I2C
+static const byte pcf857x_sizes[PCF857X_COUNT] PROGMEM = PCF857X_SIZES;
+static const byte pcf857x_addrs[PCF857X_COUNT] PROGMEM = PCF857X_ADDRS;
+
 void setFilters_PCF857X(FilterId filt) { // any combo of PCF857X-like chips at any addresses
-  static const byte sizes[PCF857X_COUNT] PROGMEM = PCF857X_SIZES;
-  static const byte addrs[PCF857X_COUNT] PROGMEM = PCF857X_ADDRS;
-  byte i=0,s;
-  while ((i<PCF857X_COUNT) && (s=sizes[i])) {
-    Wire.beginTransmission(addrs[i]);
+  byte i=0;
+  char s;
+  filt = ~filt; // invert all outputs.
+  while ((i<PCF857X_COUNT) && (s=pgm_read_byte(&pcf857x_sizes[i]))) {
+    Wire.beginTransmission(pgm_read_byte(&pcf857x_addrs[i]));
     while (s>0) {
       Wire.write(filt & 0xFF);
       filt>>=8;
@@ -147,6 +150,27 @@ void setFilters_PCF857X(FilterId filt) { // any combo of PCF857X-like chips at a
     Wire.endTransmission();
     i++;
   }
+}
+
+FilterId getFilters_PCF857X() {
+  byte i=0;
+  char s;
+  FilterId filt=0, temp;
+  
+  while ((i<PCF857X_COUNT) && (s=pgm_read_byte(&pcf857x_sizes[i]))) {
+    Wire.requestFrom((uint8_t)pgm_read_byte(&pcf857x_addrs[i]), (uint8_t)((s+7)/8));
+    temp=0;
+    while (Wire.available()) {
+      temp>>=8;
+      temp|=(FilterId)Wire.read() << ((sizeof(temp)-1)*8);
+    }
+    temp >>= (sizeof(temp)*8) - s;
+    filt <<= s;
+    filt |= temp;
+  }
+
+  filt = ~filt;
+  return filt;
 }
 #endif // FILTER_I2C
 
