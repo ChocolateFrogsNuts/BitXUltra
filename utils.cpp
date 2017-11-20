@@ -74,8 +74,9 @@ void init_state() {
   state.wpm          = DEFAULT_WPM;
   state.cw_swap_paddles=false;
   state.cw_ultimatic   =false;
-  state.cw_beacon_interval=CWBEACON_INTERVAL_MIN;
+  state.cw_beacon_interval =CWBEACON_INTERVAL_MIN;
   state.fsq_beacon_interval=FSQBEACON_INTERVAL_MIN;
+  state.fsq_mode           =0;
   for (i=0; i<state.vfoCount; i++) {
       init_vfo(i);
   }
@@ -195,6 +196,7 @@ byte getEEPROMByte(unsigned int addr) {
 
 #if HAVE_FSQ_BEACON
 void set_fsq_data(struct fsq_data *data) {
+  data->magic=FSQ_MAGIC;
   EEPROM.put(FSQ_EEPROM_START, *data);
 }
 void get_fsq_data(struct fsq_data *data) {

@@ -248,10 +248,33 @@ static void h_cwbeacon() {
 #endif // HAVE_CW_BEACON
 #endif // HAVE_CW==2
 #if HAVE_FSQ_BEACON
-static void s_fsqbeacon() {
-             state.fsq_beacon_interval = adjustment_data.value;
+#if HAVE_FSQ_BEACON==WITH_FSQ_ANY
+static void s_fsqbeacon_type() {
+             state.fsq_mode = adjustment_data.value;
              printLine2(FH(S_FSQBEACON));
              mode=MODE_FSQBEACON;
+}
+static void d_fsqbeacon_type() {
+             // display string for beacon mode adjustment_data.value
+             printLine2(FH(get_fsq_name(adjustment_data.value)));
+}
+static void h_fsqbeacon_type() {
+             defineAdjustment(A_FSQMODE, PSTR("Mode"), 0, FSQBEACON_INTERVAL_MAX, 1, 
+                          &d_fsqbeacon_type, NULL, &s_fsqbeacon_type);
+             startAdjustment(A_FSQMODE, state.fsq_beacon_interval);
+             mode=MODE_ADJUSTMENT;
+}
+#endif // HAVE_FSQ_BEACON==WITH_FSQ_ANY
+
+static void s_fsqbeacon() {
+             state.fsq_beacon_interval = adjustment_data.value;
+#if HAVE_FSQ_BEACON==WITH_FSQ_ANY
+             h_fsqbeacon_type();
+#else
+             printLine2(FH(S_FSQBEACON));
+             state.fsq_mode=HAVE_FSQ_BEACON-1;
+             mode=MODE_FSQBEACON;
+#endif
 }
 static void h_fsqbeacon() {
              defineAdjustment(A_FSQBEAC, M_FSQBEAC, FSQBEACON_INTERVAL_MIN, FSQBEACON_INTERVAL_MAX, FSQBEACON_INTERVAL_STEP, 

@@ -62,9 +62,12 @@
 // requires HAVE_CW==2
 #define HAVE_CW_BEACON    1
 
-// Experimantal: JT* and WSPR beacon.   This adds about 18% and will NOT fit with everything else! 
-// Turn off stuff like Analyser, SMeter, SWR and set CW==1 to get it in.
-//#define HAVE_FSQ_BEACON   1
+// Experimantal: JT* and WSPR beacon.
+// Turn off stuff like Analyser, SMeter, SWR and set CW==1 to get one to fit in.
+// Options are FSQ_ANY, FSQ_JT9, FSQ_JT65, FSQ_JT4, FSQ_WSPR, FSQ_2, FSQ_3, FSQ_4_5, FSQ_6
+// Any one will add about 8-12%, FSQ_ANY adds 27% and will NOT fit with much else!
+//(WITH_FSQ_ANY pretty much requires turning off everything else, or a bigger chip)
+//#define HAVE_FSQ_BEACON   WITH_FSQ_WSPR
 
 /* 
  * Define HAVE_SMETER if you have wired up to monitor the audio levels ust before the volume knob. 

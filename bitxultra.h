@@ -11,6 +11,20 @@
 #define SMETER_HIRES   6
 #define SMETER_DEBUG   9
 
+// used as a reference into fsq_params (x-1) if only one FSQ mode is enabled
+// or FSQ_ANY will build for ALL of these selectable at run time.
+// Note that there isn't room for all modes with this firmware in the chip.
+#define WITH_FSQ_JT9   1
+#define WITH_FSQ_JT65  2
+#define WITH_FSQ_JT4   3
+#define WITH_FSQ_WSPR  4
+#define WITH_FSQ_2     5
+#define WITH_FSQ_3     6
+#define WITH_FSQ_4_5   7
+#define WITH_FSQ_6     8
+#define WITH_FSQ_ANY  99
+
+
 #include "config.h"
 #include <avr/pgmspace.h>
 
@@ -43,7 +57,7 @@ struct band {
  *  We can have many VFOs.. use a structure to keep track of the global config and each VFO's settings.
  */
 // if this grows beyond 50 bytes we need to adjust *_START and *_EEPROM_SIZE
-// Current size is 15 bytes.
+// Current size is 17 bytes.
 struct state {
   unsigned char magic;
   unsigned char vfoActive;
@@ -58,6 +72,7 @@ struct state {
            bool cw_ultimatic:1;
   unsigned int  cw_beacon_interval;
   unsigned int  fsq_beacon_interval;
+  unsigned char fsq_mode;
 };
 
 
@@ -208,6 +223,8 @@ struct fsq_data { // must not exceed 50 bytes
   byte dbm;
   char message[14];
 };
+extern PGM_P get_fsq_name(byte);
+extern char find_fsq_mode(char *);
 extern void set_fsq_data(struct fsq_data *data);
 extern void get_fsq_data(struct fsq_data *data);
 extern void start_fsq_tx();

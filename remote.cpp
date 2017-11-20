@@ -284,8 +284,35 @@ static PGM_P h_fsqbeacon(char *p) {
   // TODO: store p as the FSQ parameters.
   UNUSED(p);
   struct fsq_data data;
-  set_fsq_data(&data);
-  return NULL;
+  char *pa,*pb;
+  pa=p;
+  pb=p;
+  while (*pa && *pa!=',') pa++;
+  if (*pa) {
+     *pa='\0';
+     strcpy(data.call, pb);
+     pa++;
+     pb=pa;
+     while (*pa && *pa!=',') pa++;
+     if (*pa) {
+        *pa='\0';
+        strcpy(data.loc, pb);
+        pa++;
+        pb=pa;
+        while (*pa && *pa!=',') pa++;
+        if (*pa) {
+           *pa='\0';
+           data.dbm = atoi(pb);
+           pa++;
+           pb=pa;
+           strcpy(data.message, pb);
+           set_fsq_data(&data);
+           return NULL;
+        }
+     }
+     
+  }
+  return ERR_INVALID;
 }
 #endif
 #endif // HAVE_CW
